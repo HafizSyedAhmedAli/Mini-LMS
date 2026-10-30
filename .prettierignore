@@ -1,0 +1,7 @@
+.next
+node_modules
+bun.lock
+src/shared/generated
+prisma/migrations
+playwright-report
+test-results

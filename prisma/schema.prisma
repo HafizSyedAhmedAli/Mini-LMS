@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/shared/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PersonKind {
+  STUDENT
+  STAFF
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum FeeEntryType {
+  CHARGE
+  PAYMENT
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  singleton    Boolean  @unique @default(true) // at most ONE row can exist
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Person {
+  id           String       @id @default(cuid())
+  kind         PersonKind
+  code         String       @unique
+  firstName    String
+  lastName     String
+  email        String?
+  phone        String?
+  guardianName String?
+  position     String?
+  archivedAt   DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  attendance   Attendance[]
+  feeEntries   FeeEntry[]
+
+  @@index([kind, archivedAt])
+}
+
+model Attendance {
+  id        String           @id @default(cuid())
+  personId  String
+  date      DateTime         @db.Date
+  status    AttendanceStatus
+  note      String?
+  createdAt DateTime         @default(now())
+  person    Person           @relation(fields: [personId], references: [id], onDelete: Restrict)
+
+  @@unique([personId, date])
+  @@index([date])
+}
+
+model FeeEntry {
+  id          String       @id @default(cuid())
+  personId    String
+  type        FeeEntryType
+  amountMinor Int
+  entryDate   DateTime     @db.Date
+  note        String?
+  createdAt   DateTime     @default(now())
+  person      Person       @relation(fields: [personId], references: [id], onDelete: Restrict)
+
+  @@index([personId, entryDate])
+}

@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment: { POSTGRES_USER: lms, POSTGRES_PASSWORD: lms, POSTGRES_DB: lms }
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lms -d lms"]
+      interval: 3s
+      retries: 20
+
+  db-test:
+    image: postgres:17-alpine
+    environment: { POSTGRES_USER: lms, POSTGRES_PASSWORD: lms, POSTGRES_DB: lms_test }
+    ports: ["5433:5432"]
+    tmpfs: [/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lms -d lms_test"]
+      interval: 3s
+      retries: 20
+
+  app:
+    build: .
+    profiles: ["app"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://lms:lms@db:5432/lms
+      DIRECT_URL: postgresql://lms:lms@db:5432/lms
+    ports: ["3000:3000"]
+    depends_on:
+      db: { condition: service_healthy }
+
+volumes:
+  pgdata:
